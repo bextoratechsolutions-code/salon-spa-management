@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 
@@ -36,27 +35,45 @@ export const AuthProvider = ({ children }) => {
   // ========================================
 
   const login = async (email, password) => {
-    const response = await api.post("/auth/login", {
-      email,
-      password,
-    });
+    try {
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+      });
 
-    const { token, admin } = response.data;
+      const { token, admin } = response.data;
 
-    if (!token) {
-      throw new Error("Authentication token not received");
+      if (!token) {
+        throw new Error("Authentication token not received");
+      }
+
+      // Save JWT token
+      localStorage.setItem("token", token);
+
+      // Save admin information
+      if (admin) {
+        localStorage.setItem("user", JSON.stringify(admin));
+        setUser(admin);
+      } else {
+        // Fallback agar backend admin object return na kare
+        const fallbackUser = {
+          email,
+          role: "admin",
+        };
+
+        localStorage.setItem("user", JSON.stringify(fallbackUser));
+        setUser(fallbackUser);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Login Error:",
+        error.response?.data || error.message
+      );
+
+      throw error;
     }
-
-    // Save JWT token
-    localStorage.setItem("token", token);
-
-    // Save admin information
-    if (admin) {
-      localStorage.setItem("user", JSON.stringify(admin));
-      setUser(admin);
-    }
-
-    return response.data;
   };
 
   // ========================================
@@ -102,4 +119,3 @@ export const useAuth = () => {
 
   return context;
 };
-
