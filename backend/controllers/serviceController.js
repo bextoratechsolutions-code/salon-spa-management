@@ -1,6 +1,8 @@
 const Service = require("../models/Service");
 
+// ===============================
 // Create Service
+// ===============================
 const createService = async (req, res) => {
   try {
     const {
@@ -12,13 +14,20 @@ const createService = async (req, res) => {
       isActive,
     } = req.body;
 
-    if (!name || price === undefined || !duration || !category) {
+    // Required fields
+    if (
+      !name ||
+      price === undefined ||
+      !duration ||
+      !category
+    ) {
       return res.status(400).json({
         success: false,
         message: "Name, price, duration and category are required",
       });
     }
 
+    // Check duplicate service
     const existingService = await Service.findOne({ name });
 
     if (existingService) {
@@ -28,17 +37,27 @@ const createService = async (req, res) => {
       });
     }
 
+    // Cloudinary image URL
+    const imageUrl = req.file ? req.file.path : "";
+
+    console.log("Uploaded file:", req.file);
+    console.log("Image URL:", imageUrl);
+
+    // Create service
     const service = await Service.create({
       name,
-      description,
+      description: description || "",
       price,
       duration,
       category,
-      isActive,
-      image: req.file ? req.file.path : "",
+      isActive:
+        isActive === undefined
+          ? true
+          : isActive === "true" || isActive === true,
+      image: imageUrl,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Service created successfully",
       service,
@@ -46,21 +65,23 @@ const createService = async (req, res) => {
   } catch (error) {
     console.error("Create service error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
 // Get All Services
+// ===============================
 const getServices = async (req, res) => {
   try {
     const services = await Service.find().sort({
       createdAt: -1,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: services.length,
       services,
@@ -68,14 +89,16 @@ const getServices = async (req, res) => {
   } catch (error) {
     console.error("Get services error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
 // Get Active Services
+// ===============================
 const getActiveServices = async (req, res) => {
   try {
     const services = await Service.find({
@@ -84,7 +107,7 @@ const getActiveServices = async (req, res) => {
       name: 1,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: services.length,
       services,
@@ -92,14 +115,16 @@ const getActiveServices = async (req, res) => {
   } catch (error) {
     console.error("Get active services error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
 // Get Single Service
+// ===============================
 const getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
@@ -111,21 +136,23 @@ const getServiceById = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       service,
     });
   } catch (error) {
     console.error("Get service error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
 // Update Service
+// ===============================
 const updateService = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
@@ -146,21 +173,45 @@ const updateService = async (req, res) => {
       isActive,
     } = req.body;
 
-    if (name !== undefined) service.name = name;
-    if (description !== undefined) service.description = description;
-    if (price !== undefined) service.price = price;
-    if (duration !== undefined) service.duration = duration;
-    if (category !== undefined) service.category = category;
-    if (isActive !== undefined) service.isActive = isActive;
+    // Update text fields
+    if (name !== undefined) {
+      service.name = name;
+    }
 
-    // New image uploaded
+    if (description !== undefined) {
+      service.description = description;
+    }
+
+    if (price !== undefined) {
+      service.price = price;
+    }
+
+    if (duration !== undefined) {
+      service.duration = duration;
+    }
+
+    if (category !== undefined) {
+      service.category = category;
+    }
+
+    if (isActive !== undefined) {
+      service.isActive =
+        isActive === "true" || isActive === true;
+    }
+
+    // ===============================
+    // Update Image
+    // ===============================
     if (req.file) {
+      console.log("New uploaded file:", req.file);
+      console.log("New image URL:", req.file.path);
+
       service.image = req.file.path;
     }
 
     await service.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Service updated successfully",
       service,
@@ -168,14 +219,16 @@ const updateService = async (req, res) => {
   } catch (error) {
     console.error("Update service error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
 // Delete Service
+// ===============================
 const deleteService = async (req, res) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
@@ -187,20 +240,23 @@ const deleteService = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Service deleted successfully",
     });
   } catch (error) {
     console.error("Delete service error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
 
+// ===============================
+// Export Controllers
+// ===============================
 module.exports = {
   createService,
   getServices,

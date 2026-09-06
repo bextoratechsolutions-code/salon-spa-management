@@ -14,18 +14,45 @@ const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
-// Public
+// ==========================================
+// PUBLIC ROUTES
+// ==========================================
+
+// Get all services
 router.get("/", getServices);
 
+// Get only active services
 router.get("/active", getActiveServices);
 
+// Get single service
 router.get("/:id", getServiceById);
 
-// Admin only
-router.post("/", protect, upload.single("image"), createService);
 
-router.put("/:id", protect, upload.single("image"), updateService);
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
 
-router.delete("/:id", protect, deleteService);
+// Create service + upload image
+router.post(
+  "/",
+  protect,
+  upload.single("image"),
+  createService
+);
+
+// Update service + upload new image
+router.put(
+  "/:id",
+  protect,
+  upload.single("image"),
+  updateService
+);
+
+// Delete service
+router.delete(
+  "/:id",
+  protect,
+  deleteService
+);
 
 module.exports = router;
